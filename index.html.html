@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Join - SkyShare</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <style>
+        body { font-family: sans-serif; background-color: #e3f2fd; text-align: center; padding: 20px; margin: 0; }
+        .header { background: #2196f3; color: white; padding: 20px; margin-bottom: 20px; }
+        input { padding: 15px; width: 250px; border-radius: 10px; border: 2px solid #bbdefb; font-size: 1rem; margin-bottom: 10px; }
+        .btn-join { background: #1976d2; color: white; padding: 15px 30px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; }
+        video { width: 95%; max-width: 1000px; background: black; border-radius: 15px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="index.html" style="float: left; color: white; text-decoration: none;">← Back</a>
+        <strong>VIEWER MODE</strong>
+    </div>
+
+    <input type="text" id="joinId" placeholder="Enter Host Code Here">
+    <button id="joinBtn" class="btn-join">Watch Now</button>
+
+    <br>
+    <video id="remoteVideo" autoplay playsinline></video>
+
+    <script>
+        const peer = new Peer();
+        
+        document.getElementById('joinBtn').onclick = () => {
+            const id = document.getElementById('joinId').value.trim();
+            if(!id) return alert("Enter a code!");
+
+            const call = peer.call(id, null);
+            call.on('stream', (stream) => {
+                document.getElementById('remoteVideo').srcObject = stream;
+            });
+        };
+    </script>
+</body>
+</html>
