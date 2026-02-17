@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkyShare - Host</title>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background-color: #e3f2fd; color: #0d47a1; text-align: center; margin: 0; padding: 20px; }
+        .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: inline-block; min-width: 320px; }
+        #codeBox { font-size: 2rem; font-weight: bold; background: #bbdefb; padding: 15px; border-radius: 10px; margin: 20px 0; display: none; cursor: pointer; border: 2px dashed #2196f3; }
+        video { width: 95%; max-width: 800px; border-radius: 10px; background: #000; margin-top: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .btn { background: #2196f3; color: white; padding: 15px 30px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1.1rem; }
+        .btn:disabled { background: #cfd8dc; cursor: not-allowed; }
+        #status { font-size: 0.9rem; margin-top: 15px; color: #546e7a; }
+    </style>
+</head>
+<body>
+    <h1>SkyShare Host</h1>
+    <div class="card">
+        <button id="hostBtn" class="btn" disabled>Connecting to Server...</button>
+        <div id="codeBox">
+            <span id="displayId">...</span>
+            <div style="font-size: 0.7rem; font-weight: normal; margin-top: 5px;">CLICK TO COPY CODE</div>
+        </div>
+        <p id="status">Status: Initializing PeerJS...</p>
+    </div>
+    <br>
+    <video id="preview" autoplay playsinline muted></video>
+
+    <script>
+        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        let secretCode = '';
+        for (let i = 0; i < 6; i++) secretCode += chars.charAt(Math.floor(Math.random() * chars.length));
+
+        // NUCLEAR CONFIGURATION
+        const peer = new Peer(secretCode, {
+            host: '0.peerjs.com',
+            port: 443,
+            path: '/',
+            secure: true,
+            debug: 1,
+            config: {
+                'iceServers': [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:global.stun.twilio.com:3478' }
+                ]
+            }
+        });
+
+        let myStream = null;
+        const hostBtn = document.getElementById('hostBtn');
+        const statusText = document.getElementById('status');
+        const codeBox = document.getElementById('codeBox');
+
+        peer.on('open', (id) => {
+            statusText.innerText = "Status: Online & Ready";
+            hostBtn.innerText = "Start Sharing Screen";
+            hostBtn.disabled = false;
+        });
+
+        peer.on('call', (call) => {
+            console.log("Viewer is calling...");
+            if (myStream) {
+                call.answer(myStream);
+                statusText.innerText = "Status: Viewer Connected!";
+            }
+        });
+
+        hostBtn.onclick = async () => {
+            try {
+                myStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+                document.getElementById('preview').srcObject = myStream;
+                document.getElementById('displayId').innerText = secretCode;
+                codeBox.style.display = 'block';
+                hostBtn.style.display = 'none';
+                statusText.innerText = "Status: STREAMING LIVE";
+            } catch (err) {
+                console.error(err);
+                alert("Sharing failed. Ensure you are on HTTPS.");
+            }
+        };
+
+        codeBox.onclick = () => {
+            navigator.clipboard.writeText(secretCode);
+            alert("Code copied!");
+        };
+    </script>
+</body>
+</html>
